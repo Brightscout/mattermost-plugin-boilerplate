@@ -1,6 +1,10 @@
-hash: c553bfb57801f8d88c9beef5f931f1d3c9bc11c01461785e827376617d879993
-updated: 2018-08-23T14:08:04.77493729+05:30
+hash: ada9edbf38321ce87d58dffdc9ea72fe19d01e508ef1dd2dac15b730ab982946
+updated: 2018-08-29T14:11:40.083856222+05:30
 imports:
+- name: github.com/Brightscout/mattermost-plugin-googledrive
+  version: 31a713d8c8a6035db70a7eef53cdb31a5249c2ae
+  subpackages:
+  - server/config
 - name: github.com/fsnotify/fsnotify
   version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: github.com/go-ini/ini
@@ -38,7 +42,7 @@ imports:
 - name: github.com/magiconair/properties
   version: c2353362d570a7bfa228149c62842019201cfb71
 - name: github.com/mattermost/mattermost-server
-  version: 43483805eabcb36ef9018f12a82a6d3ac055baf5
+  version: d2945cdd77bdf1ee03367a0d45624094fb936c19
   subpackages:
   - einterfaces
   - mlog
@@ -113,6 +117,10 @@ imports:
   - bcrypt
   - blake2b
   - blowfish
+- name: golang.org/x/lint
+  version: 06c8688daad7faa9da5a0c2f163a3d14aac986ca
+  subpackages:
+  - golint
 - name: golang.org/x/net
   version: aaf60122140d3fcf75376d319f0554393160eb50
   subpackages:
@@ -137,6 +145,10 @@ imports:
   - transform
   - unicode/bidi
   - unicode/norm
+- name: golang.org/x/tools
+  version: 6cd1fcedba52a3e8045a1c96970cec308e4a632c
+  subpackages:
+  - cmd/goimports
 - name: google.golang.org/genproto
   version: c66870c02cf823ceb633bcd05be3c7cda29976f4
   subpackages:

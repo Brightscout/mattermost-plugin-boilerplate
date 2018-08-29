@@ -4,3 +4,9 @@ import:
   version: ~5.2.0
   subpackages:
   - plugin
+- package: golang.org/x/tools
+  subpackages:
+  - cmd/goimports
+- package: golang.org/x/lint
+  subpackages:
+  - golint
