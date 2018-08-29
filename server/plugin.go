@@ -3,19 +3,22 @@ package main
 import (
 	"net/http"
 
-	"github.com/mattermost/mattermost-server/plugin"
 	"fmt"
 	"os"
 	"path/filepath"
+
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
+	"github.com/mattermost/mattermost-server/plugin"
 )
 
+// Plugin ...
 type Plugin struct {
 	plugin.MattermostPlugin
 
 	handler http.Handler
 }
 
+// OnActivate ...
 func (p *Plugin) OnActivate() error {
 	fmt.Println("activated")
 
@@ -41,8 +44,8 @@ func (p *Plugin) setupStaticFileServer() error {
 	return nil
 }
 
+// OnConfigurationChange ...
 func (p *Plugin) OnConfigurationChange() error {
-	fmt.Println("AAAAAAAAA")
 	if config.Mattermost != nil {
 		var configuration config.Configuration
 
@@ -64,6 +67,7 @@ func (p *Plugin) OnConfigurationChange() error {
 	}
 	return nil
 }
+
 //
 //func (p *Plugin) RegisterCommands() error {
 //	for _, c := range command.Commands {
@@ -112,9 +116,10 @@ func (p *Plugin) OnConfigurationChange() error {
 //	}
 //}
 //
-func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request)  {
-	w.Write([]byte("hello"))
 
+// ServeHTTP ...
+func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("hello"))
 
 	//var path = r.URL.Path
 	//var endpoint = controller.Endpoints[path]
