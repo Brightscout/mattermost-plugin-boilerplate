@@ -1,0 +1,21 @@
+{
+  "id": "boilerplate",
+  "version": "0.0.1",
+  "name": "Boilerplate plugin",
+  "description": "",
+  "webapp": {
+    "bundle_path": "webapp/main.js"
+  },
+  "server": {
+    "executable": "server/plugin.exe"
+  },
+  "settings_schema": {
+    "settings": [
+      {
+        "key": "foobar",
+        "display_name": "foobar",
+        "type": "text"
+      }
+    ]
+  }
+}

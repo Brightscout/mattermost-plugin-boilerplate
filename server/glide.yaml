@@ -1,0 +1,6 @@
+package: github.com/Brightscout/mattermost-plugin-boilerplate/server
+import:
+- package: github.com/mattermost/mattermost-server
+  version: ~5.2.0
+  subpackages:
+  - plugin
