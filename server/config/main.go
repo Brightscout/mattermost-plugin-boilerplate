@@ -13,6 +13,8 @@ const (
 
 	URLPluginBase = "/plugins/" + PluginName
 	URLStaticBase = URLPluginBase + "/static"
+
+	HeaderMattermostUserId = "Mattermost-User-Id"
 )
 
 var (

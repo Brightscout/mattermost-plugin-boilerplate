@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"github.com/Brightscout/mattermost-plugin-googledrive/server/config"
 	"net/http"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
 )
 
 type Endpoint struct {

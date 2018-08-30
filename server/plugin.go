@@ -8,6 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/controller"
+	"github.com/mattermost/mattermost-server/model"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/util"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/command"
 )
 
 type Plugin struct {
@@ -17,17 +21,15 @@ type Plugin struct {
 }
 
 func (p *Plugin) OnActivate() error {
-	fmt.Println("activated")
-
 	config.Mattermost = p.API
 
 	if err := p.setupStaticFileServer(); err != nil {
 		return err
 	}
 
-	//if err := p.OnConfigurationChange(); err != nil {
-	//	return err
-	//}
+	if err := p.OnConfigurationChange(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -42,7 +44,6 @@ func (p *Plugin) setupStaticFileServer() error {
 }
 
 func (p *Plugin) OnConfigurationChange() error {
-	fmt.Println("AAAAAAAAA")
 	if config.Mattermost != nil {
 		var configuration config.Configuration
 
@@ -64,72 +65,68 @@ func (p *Plugin) OnConfigurationChange() error {
 	}
 	return nil
 }
-//
-//func (p *Plugin) RegisterCommands() error {
-//	for _, c := range command.Commands {
-//		if err := config.Mattermost.RegisterCommand(c.Command); err != nil {
-//			return err
-//		}
-//	}
-//
-//	return nil
-//}
 
-//func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-//	// cant use strings.split as it includes empty string if deliminator
-//	// is the last character in input string
-//	var split, argErr = util.SplitArgs(args.Command)
-//	if argErr != nil {
-//		return &model.CommandResponse{
-//			Type: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-//			Text: argErr.Error(),
-//		}, nil
-//	}
-//
-//	var function = split[0]
-//	var params []string
-//
-//	if len(split) > 2 {
-//		params = split[2:]
-//	}
-//
-//	var commandConfig = command.Commands[function]
-//	if commandConfig == nil {
-//		return nil, &model.AppError{Message: "Unknown command: [" + function + "] encountered"}
-//	}
-//
-//	var context = p.prepareContext(args)
-//	if err := commandConfig.Validate(params, context); err != nil {
-//		return err, nil
-//	}
-//
-//	return commandConfig.Execute(params, context)
-//}
-//
-//func (p *Plugin) prepareContext(args *model.CommandArgs) command.CommandContext {
-//	return command.CommandContext{
-//		CommandArgs: args,
-//	}
-//}
-//
-func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request)  {
-	w.Write([]byte("hello"))
+func (p *Plugin) RegisterCommands() error {
+	for _, c := range command.Commands {
+		if err := config.Mattermost.RegisterCommand(c.Command); err != nil {
+			return err
+		}
+	}
 
+	return nil
+}
 
-	//var path = r.URL.Path
-	//var endpoint = controller.Endpoints[path]
-	//
-	//if endpoint != nil {
-	//	if endpoint.RequiresAuth {
-	//		if controller.Authenticated(w, r) {
-	//			endpoint.Execute(w, r)
-	//		}
-	//	} else {
-	//		endpoint.Execute(w, r)
-	//	}
-	//} else {
-	//	p.handler.ServeHTTP(w, r)
-	//}
+func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	// cant use strings.split as it includes empty string if deliminator
+	// is the last character in input string
+	var split, argErr = util.SplitArgs(args.Command)
+	if argErr != nil {
+		return &model.CommandResponse{
+			Type: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text: argErr.Error(),
+		}, nil
+	}
+
+	var function = split[0]
+	var params []string
+
+	if len(split) > 2 {
+		params = split[2:]
+	}
+
+	var commandConfig = command.Commands[function]
+	if commandConfig == nil {
+		return nil, &model.AppError{Message: "Unknown command: [" + function + "] encountered"}
+	}
+
+	var context = p.prepareContext(args)
+	if err := commandConfig.Validate(params, context); err != nil {
+		return err, nil
+	}
+
+	return commandConfig.Execute(params, context)
+}
+
+func (p *Plugin) prepareContext(args *model.CommandArgs) command.CommandContext {
+	return command.CommandContext{
+		CommandArgs: args,
+	}
+}
+func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
+	var conf = config.GetConfig()
+	if err := conf.IsValid(); err != nil {
+		http.Error(w, "This plugin is not configured.", http.StatusNotImplemented)
+		return
+	}
+
+	var path = r.URL.Path
+	var endpoint = controller.Endpoints[path]
+
+	if endpoint == nil {
+		p.handler.ServeHTTP(w, r)
+	} else if !endpoint.RequiresAuth || controller.Authenticated(w, r) {
+		endpoint.Execute(w, r)
+	}
 }
 
 func main() {

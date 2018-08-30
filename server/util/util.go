@@ -2,13 +2,13 @@ package util
 
 import (
 	"fmt"
-	"github.com/Brightscout/mattermost-plugin-googledrive/server/config"
 	"github.com/pkg/errors"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -67,7 +67,7 @@ func ShortenUrl(longUrl string, expiryType ...int) (string, error) {
 	var shortUrl = fmt.Sprintf("/plugins/%s/redirect?key=%s", config.PluginName, key)
 
 	// URL saved is in format <expiry type><generated URL key>.
-	var err = config.Mattermost.KeyValueStore().Set(config.UrlMappingKeyPrefix+key, []byte(strconv.Itoa(expiry)+longUrl))
+	var err = config.Mattermost.KVSet(config.UrlMappingKeyPrefix+key, []byte(strconv.Itoa(expiry)+longUrl))
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,7 @@ func ShortenUrl(longUrl string, expiryType ...int) (string, error) {
 }
 
 func LengthenUrl(shortUrl string) (string, error) {
-	var longUrl, err = config.Mattermost.KeyValueStore().Get(config.UrlMappingKeyPrefix + shortUrl)
+	var longUrl, err = config.Mattermost.KVGet(config.UrlMappingKeyPrefix + shortUrl)
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +88,7 @@ func LengthenUrl(shortUrl string) (string, error) {
 	longUrl = longUrl[1:]
 
 	if expiry == ExpirySingleUse {
-		defer config.Mattermost.KeyValueStore().Delete(config.UrlMappingKeyPrefix + shortUrl)
+		defer config.Mattermost.KVDelete(config.UrlMappingKeyPrefix + shortUrl)
 	}
 
 	return string(longUrl), nil
