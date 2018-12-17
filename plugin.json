@@ -10,12 +10,14 @@
     "executable": "server/plugin.exe"
   },
   "settings_schema": {
-    "settings": [
-      {
-        "key": "foobar",
-        "display_name": "foobar",
-        "type": "text"
-      }
-    ]
+	"settings": [
+	  {
+		"key": "SiteURL",
+		"display_name": "Site URL",
+		"type": "text",
+		"help_text": "The URL where Mattermost is being served, complete with protocol and any special ports being used.",
+		"placeholder": "https://mm.example.com:8065"
+	  }
+	]
   }
 }
