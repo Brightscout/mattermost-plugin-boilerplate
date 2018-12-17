@@ -14,7 +14,7 @@ type Context struct {
 type Config struct {
 	Command  *model.Command
 	HelpText string
-	Execute  func([]string, Context) (*model.CommandResponse, *model.AppError)
+	Execute   func([]string, Context) (*model.CommandResponse, *model.AppError)
 	Validate func([]string, Context) (*model.CommandResponse, *model.AppError)
 }
 
