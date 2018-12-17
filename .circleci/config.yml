@@ -7,7 +7,7 @@ jobs:
     docker:
       - image: circleci/golang:1.11-node
 
-    working_directory: ~/mattermost-plugin-boilerplate
+    working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
 
     steps:
       - checkout
@@ -17,8 +17,8 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
 
-      - run: make test
       - run: make dist
+      - run: make test
 
       - save_cache:
           key: dependency-cache-{{ checksum "./server/glide.lock" }}
