@@ -17,7 +17,12 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
 
-      - run: make dist
+      - type: shell
+          name: 'Make dist'
+          command: make dist
+          environment:
+              TERM: xterm-256color
+
       - run: make test
 
       - save_cache:
