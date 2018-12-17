@@ -18,10 +18,10 @@ jobs:
           key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
 
       - type: shell
-          name: 'Make dist'
-          command: make dist
-          environment:
-              TERM: xterm-256color
+        name: 'Make dist'
+        command: make dist
+        environment:
+            TERM: xterm-256color
 
       - run: make test
 
