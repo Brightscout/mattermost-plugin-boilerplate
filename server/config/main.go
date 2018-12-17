@@ -2,19 +2,20 @@ package config
 
 import (
 	"github.com/mattermost/mattermost-server/plugin"
+	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 )
 
 const (
 	PluginName                = "boilerplate"
 	CommandPrefix             = PluginName
-	UrlMappingKeyPrefix       = "url_"
+	URLMappingKeyPrefix       = "url_"
 	ServerExeToWebappRootPath = "/../webapp"
 
 	URLPluginBase = "/plugins/" + PluginName
 	URLStaticBase = URLPluginBase + "/static"
 
-	HeaderMattermostUserId = "Mattermost-User-Id"
+	HeaderMattermostUserID = "Mattermost-User-Id"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 )
 
 type Configuration struct {
-	Foobar string
+	SiteURL string `json:"SiteURL"`
 }
 
 func GetConfig() *Configuration {
@@ -43,6 +44,11 @@ func (c *Configuration) ProcessConfiguration() error {
 func (c *Configuration) IsValid() error {
 	// Add config validations here.
 	// Check fot required fields, formats, etc.
+
+	if c.SiteURL == "" {
+		Mattermost.LogError("site URL cannot be empty")
+		return errors.New("site URL cannot be empty")
+	}
 
 	return nil
 }

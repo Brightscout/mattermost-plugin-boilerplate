@@ -1,0 +1,30 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11-node
+
+    working_directory: ~/mattermost-plugin-boilerplate
+
+    steps:
+      - checkout
+
+      - restore_cache:
+        key: dependency-cache-{{ checksum "./server/glide.lock" }}
+      - restore_cache:
+        key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
+
+      - run: make test
+      - run: make dist
+
+      - save_cache:
+        key: dependency-cache-{{ checksum "./server/glide.lock" }}
+        paths:
+          - ./server/vendor
+      - save_cache:
+        key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
+        paths:
+          - ./webapp/node_modules

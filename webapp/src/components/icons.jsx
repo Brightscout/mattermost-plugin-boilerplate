@@ -7,7 +7,7 @@ export class ChannelHeaderButtonIcon extends React.PureComponent {
         return (
             <span
                 dangerouslySetInnerHTML={{
-                    __html: Constants.SVGS.CHANNEL_HEADER_ICON
+                    __html: Constants.SVGS.CHANNEL_HEADER_ICON,
                 }}
             />
         );

@@ -12,8 +12,8 @@ function getBaseURL() {
 
 function popupCenter(url, title, w, h) {
     // Fixes dual-screen position                            Most browsers       Firefox
-    const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
-    const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+    const dualScreenLeft = window.screenLeft === undefined ? window.screenX : window.screenLeft; // eslint-disable-line no-undefined
+    const dualScreenTop = window.screenTop === undefined ? window.screenY : window.screenTop; // eslint-disable-line no-undefined
 
     let width;
     let height;
@@ -43,5 +43,5 @@ function popupCenter(url, title, w, h) {
 
 export default {
     getBaseURL,
-    popupCenter
+    popupCenter,
 };
