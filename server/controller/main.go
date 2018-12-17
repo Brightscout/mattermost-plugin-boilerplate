@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
 )
 
@@ -17,11 +18,11 @@ var Endpoints = map[string]*Endpoint{
 	// GetMetadata.Path: GetMetadata
 }
 
-// verifies if provided request is performed by a logged in Mattermost user.
+// Authenticated verifies if provided request is performed by a logged-in Mattermost user.
 func Authenticated(w http.ResponseWriter, r *http.Request) bool {
-	var userId = r.Header.Get(config.HeaderMattermostUserId)
+	userID := r.Header.Get(config.HeaderMattermostUserID)
 
-	if userId == "" {
+	if userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}

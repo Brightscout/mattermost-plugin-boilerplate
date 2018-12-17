@@ -1,20 +1,33 @@
 package command
 
-import "github.com/mattermost/mattermost-server/model"
+import (
+	"fmt"
 
-type CommandContext struct {
+	"github.com/mattermost/mattermost-server/model"
+)
+
+type Context struct {
 	CommandArgs *model.CommandArgs
+	Props       map[string]interface{}
 }
 
 type Config struct {
 	Command  *model.Command
-	Syntax   string
-	Execute  func([]string, CommandContext) (*model.CommandResponse, *model.AppError)
-	Validate func([]string, CommandContext) *model.CommandResponse
+	HelpText string
+	Execute  func([]string, Context) (*model.CommandResponse, *model.AppError)
+	Validate func([]string, Context) (*model.CommandResponse, *model.AppError)
 }
 
-var Commands = map[string]*Config{
-	// Add command mappings here.
-	// Map trigger to corresponding Config object. Example -
-	// SomeCommand().Trigger: SomeCommand()s
+func (c *Config) Syntax() string {
+	return fmt.Sprintf("/%s %s", c.Command.Trigger, c.Command.AutoCompleteHint)
+}
+
+var Commands map[string]*Config
+
+func init() {
+	Commands = map[string]*Config{
+		// Add command mappings here.
+		// Map trigger to corresponding Config object. Example -
+		// SomeCommand().Trigger: SomeCommand()s
+	}
 }

@@ -1,15 +1,15 @@
-var path = require('path');
+const path = require('path');
 
 module.exports = {
     entry: [
-        './src/index.jsx'
+        './src/index.jsx',
     ],
     resolve: {
         modules: [
             'src',
-            'node_modules'
+            'node_modules',
         ],
-        extensions: ['*', '.js', '.jsx']
+        extensions: ['*', '.js', '.jsx'],
     },
     module: {
         rules: [
@@ -19,18 +19,30 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['env', 'react']
-                    }
-                }
-            }
-        ]
+                        presets: [
+                            'react',
+                            'env',
+                            'stage-0',
+                        ],
+                        plugins: [
+                            'transform-runtime',
+                        ],
+                    },
+                },
+            },
+        ],
     },
     externals: {
-        react: 'React'
+        react: 'React',
+        redux: 'Redux',
+        'prop-types': 'PropTypes',
+        'post-utils': 'PostUtils',
+        'react-bootstrap': 'ReactBootstrap',
+        'react-redux': 'ReactRedux',
     },
     output: {
         path: path.join(__dirname, '/dist'),
         publicPath: '/',
-        filename: 'main.js'
-    }
+        filename: 'main.js',
+    },
 };
