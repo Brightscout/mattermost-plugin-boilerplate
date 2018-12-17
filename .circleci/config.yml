@@ -36,9 +36,3 @@ jobs:
       - store_artifacts:
           path: ./dist
           destination: build
-
-workflows:
-  version: 2
-  "test_build":
-    jobs:
-      - test_build
