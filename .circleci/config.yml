@@ -37,12 +37,36 @@ jobs:
           path: ./dist
           destination: build
 
-  release:
+  build-and-release:
     docker:
       - image: circleci/golang:1.11-node
     working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
     steps:
       - checkout
+      - restore_cache:
+          name: Restore Golang dependencies cache
+          key: dependency-cache-{{ checksum "./server/glide.lock" }}
+      - restore_cache:
+          name: Restore NPM dependencies cache
+          key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
+      - type: shell
+        name: 'Build artifacts'
+        command: make dist
+        environment:
+            TERM: dumb
+      - run:
+          name: Test
+          command: make test
+      - save_cache:
+          name: Save Golang dependencies cache
+          key: dependency-cache-{{ checksum "./server/glide.lock" }}
+          paths:
+              - ./server/vendor
+      - save_cache:
+          name: Save NPM dependencies cache
+          key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
+          paths:
+              - ./webapp/node_modules
       - run: go get -u github.com/tcnksm/ghr
       - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
 
@@ -58,15 +82,7 @@ workflows:
               ignore: /.*/
   build-and-release:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
-      - release:
-          requires:
-            - build
+      - build-and-release:
           filters:
             branches:
               ignore: /.*/
