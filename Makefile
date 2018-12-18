@@ -4,8 +4,8 @@ GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOPATH ?= $(GOPATH:)
 
 PLUGINNAME=boilerplate
-PLUGINVERSION=$(shell echo `cat plugin.json | grep -Po '"'"version"'"\s*:\s*"\K([^"]*)'`)
-PACKAGENAME=mattermost-plugin-$(PLUGINNAME)-v$(PLUGINVERSION)
+PLUGINVERSION=v$(shell echo `cat plugin.json | grep -Po '"'"version"'"\s*:\s*"\K([^"]*)'`)
+PACKAGENAME=mattermost-plugin-$(PLUGINNAME)-$(PLUGINVERSION)
 
 BLACK=`tput setaf 0`
 RED=`tput setaf 1`
@@ -20,9 +20,16 @@ BOLD=`tput bold`
 INVERSE=`tput rev`
 RESET=`tput sgr0`
 
-.PHONY: default test clean check-style checkjs checkgo govet golint gofmt .distclean dist fix fixjs fixgo
+.PHONY: default test clean check-style checkjs checkgo govet golint gofmt .distclean dist fix fixjs fixgo github-release
 
 default: check-style test dist
+
+github-release:
+	@if [ $$(git status --porcelain | wc -l) != "0" -o $$(git rev-list HEAD@{upstream}..HEAD | wc -l) != "0" ]; \
+		then echo ${RED}"local repo is not clean"${RESET}; exit 1; fi;
+	@echo ${BOLD}"Creating a tag to trigger circleci github release\n"${RESET}
+	git tag $(PLUGINVERSION)
+	git push origin $(PLUGINVERSION)
 
 check-style: .npminstall vendor
 	@echo ${BOLD}"Checking for style guide compliance\n"${RESET}
