@@ -36,3 +36,39 @@ jobs:
       - store_artifacts:
           path: ./dist
           destination: build
+
+  release:
+    docker:
+      - image: circleci/golang:1.11-node
+    working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
+    steps:
+      - checkout
+      - run: go get -u github.com/tcnksm/ghr
+      - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /(?<=^[Vv]|^)(?:0|[1-9](?:(?:0|[1-9])+)*)[.](?:0|[1-9](?:(?:0|[1-9])+)*)[.](?:0|[1-9](?:(?:0|[1-9])+)*)/
+  build-and-release:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /(?<=^[Vv]|^)(?:0|[1-9](?:(?:0|[1-9])+)*)[.](?:0|[1-9](?:(?:0|[1-9])+)*)[.](?:0|[1-9](?:(?:0|[1-9])+)*)/
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /(?<=^[Vv]|^)(?:0|[1-9](?:(?:0|[1-9])+)*)[.](?:0|[1-9](?:(?:0|[1-9])+)*)[.](?:0|[1-9](?:(?:0|[1-9])+)*)/
