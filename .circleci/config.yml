@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.11-node
-    working_directory: /go/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
     steps:
       - checkout
       - restore_cache:
@@ -43,7 +43,7 @@ jobs:
   release:
     docker:
       - image: circleci/golang:1.11-node
-    working_directory: /go/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
     steps:
       - checkout
       - attach_workspace:
