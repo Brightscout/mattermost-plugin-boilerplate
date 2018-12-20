@@ -1,11 +1,18 @@
-GO := go
-GOARCH=amd64
+GO:=go
+GOARCH:=amd64
 GOOS=$(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOPATH ?= $(GOPATH:)
 
-PLUGINNAME=boilerplate
-PLUGINVERSION=v$(shell echo `cat plugin.json | grep -Po '"'"version"'"\s*:\s*"\K([^"]*)'`)
+MANIFEST_FILE ?= plugin.json
+
+PLUGINNAME=$(shell echo `grep -Po '"'"id"'"\s*:\s*"\K([^"]*)' $(MANIFEST_FILE)`)
+PLUGINVERSION=v$(shell echo `grep -Po '"'"version"'"\s*:\s*"\K([^"]*)' $(MANIFEST_FILE)`)
 PACKAGENAME=mattermost-plugin-$(PLUGINNAME)-$(PLUGINVERSION)
+
+HAS_WEBAPP=$(shell if [ "$(shell grep -E '[\^"]webapp["][ ]*[:]' $(MANIFEST_FILE)  | wc -l)" -gt "0" ]; then echo "true"; fi)
+HAS_SERVER=$(shell if [ "$(shell grep -E '[\^"]server["][ ]*[:]' $(MANIFEST_FILE)  | wc -l)" -gt "0" ]; then echo "true"; fi)
+
+TMPFILEGOLINT=golint.tmp
 
 BLACK=`tput setaf 0`
 RED=`tput setaf 1`
@@ -20,30 +27,44 @@ BOLD=`tput bold`
 INVERSE=`tput rev`
 RESET=`tput sgr0`
 
-.PHONY: default test clean check-style checkjs checkgo govet golint gofmt .distclean dist fix fixjs fixgo github-release
+.PHONY: default pre-run test clean check-style check-js check-go govet golint gofmt .distclean dist fix format fix-js fix-go github-release
 
 default: check-style test dist
+
+pre-run:
+ifneq ($(HAS_WEBAPP),)
+	@echo "export const PLUGIN_NAME = '`echo $(PLUGINNAME)`';\
+	" > webapp/src/constants/manifest.js
+endif
+ifneq ($(HAS_SERVER),)
+	@echo "package config\n\nconst (\n\
+		PluginName = \""`echo $(PLUGINNAME)`"\"\n)" > server/config/manifest.go
+
+endif
 
 github-release:
 	@if [ $$(git status --porcelain | wc -l) != "0" -o $$(git rev-list HEAD@{upstream}..HEAD | wc -l) != "0" ]; \
 		then echo ${RED}"local repo is not clean"${RESET}; exit 1; fi;
-	@echo ${BOLD}"Creating a tag to trigger circleci github release\n"${RESET}
+	@echo ${BOLD}"Creating a tag to trigger circleci build-and-release job\n"${RESET}
 	git tag $(PLUGINVERSION)
 	git push origin $(PLUGINVERSION)
 
 check-style: .npminstall vendor
 	@echo ${BOLD}"Checking for style guide compliance\n"${RESET}
-	@make checkjs
-	@make checkgo
+	@make check-js
+	@make check-go
 
-checkjs: webapp
+check-js:
+ifneq ($(HAS_WEBAPP),)
 	@echo ${BOLD}Running ESLINT${RESET}
 	@cd webapp && npm run lint
 	@echo ${GREEN}"eslint success\n"${RESET}
+endif
 
-checkgo: server govet golint gofmt
+check-go: server govet golint gofmt
 
 govet:
+ifneq ($(HAS_SERVER),)
 	@go tool vet 2>/dev/null ; if [ $$? -eq 3 ]; then \
 		echo "--> installing govet"; \
 		go get golang.org/x/tools/cmd/vet; \
@@ -53,8 +74,10 @@ govet:
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
 	@$(GO) vet $(PKGS)
 	@echo ${GREEN}"govet success\n"${RESET}
+endif
 
 golint:
+ifneq ($(HAS_SERVER),)
 	@command -v golint >/dev/null ; if [ $$? -ne 0 ]; then \
 		echo "--> installing golint"; \
 		go get -u golang.org/x/lint/golint; \
@@ -62,19 +85,30 @@ golint:
 	@echo ${BOLD}Running GOLINT${RESET}${RED}
 	@cd server
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
-	@# grep -v is used to ignore specific linting rules and not echo their failure terminal
+	@touch $(TMPFILEGOLINT)
 	-@for pkg in $(PKGS) ; do \
-		golint $$pkg | grep -v "have comment" | grep -v "comment on exported" | grep -v "lint suggestions" ; \
-	done && echo ${RED}"golint failure\n"${RESET} || echo ${GREEN}"golint success\n"${RESET}
+		echo `golint $$pkg | grep -v "have comment" | grep -v "comment on exported" | grep -v "lint suggestions"` >> $(TMPFILEGOLINT) ; \
+	done
+	@grep -Ev "^$$" $(TMPFILEGOLINT) || true
+	@if [ "$$(grep -Ev "^$$" $(TMPFILEGOLINT) | wc -l)" -gt "0" ]; then \
+		rm -f $(TMPFILEGOLINT); echo "golint failure\n"${RESET}; exit 1; else \
+		rm -f $(TMPFILEGOLINT); echo ${GREEN}"golint success\n"${RESET}; \
+	fi
+endif
 
-fix: fixjs fixgo
+format: fix
 
-fixjs:
+fix: fix-js fix-go
+
+fix-js:
+ifneq ($(HAS_WEBAPP),)
 	@echo ${BOLD}Formatting js giles${RESET}
 	@cd webapp && npm run fix
 	@echo "formatted js files\n"
+endif
 
-fixgo:
+fix-go:
+ifneq ($(HAS_SERVER),)
 	@command -v goimports >/dev/null ; if [ $$? -ne 0 ]; then \
 		echo "--> installing goimports"; \
 		go get golang.org/x/tools/cmd/goimports; \
@@ -83,8 +117,10 @@ fixgo:
 	@cd server
 	@find ./ -type f -name "*.go" -not -path "./server/vendor/*" -exec goimports -w {} \;
 	@echo "formatted go files\n"
+endif
 
 gofmt:
+ifneq ($(HAS_SERVER),)
 	@echo ${BOLD}Running GOFMT${RESET}${RED}
 	@for package in $$(go list ./server/...); do \
 		files=$$(go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}' $$package); \
@@ -98,36 +134,50 @@ gofmt:
 		fi; \
 	done
 	@echo ${GREEN}"gofmt success\n"${RESET}
+endif
 
 test:
+ifneq ($(HAS_SERVER),)
 	go test -v -coverprofile=coverage.txt ./...
+endif
 
 .npminstall: webapp/package-lock.json
+ifneq ($(HAS_WEBAPP),)
 	@echo ${BOLD}"Getting dependencies using npm\n"${RESET}
 	cd webapp && npm install
 	@echo "\n"
+endif
 
 vendor: server/glide.lock
+ifneq ($(HAS_SERVER),)
 	@echo ${BOLD}"Getting dependencies using glide\n"${RESET}
 	cd server && go get github.com/Masterminds/glide
 	cd server && $(shell go env GOPATH)/bin/glide install
 	@echo "\n"
+endif
 
-dist: .distclean check-style plugin.json
+dist: .distclean check-style $(MANIFEST_FILE)
 	@echo ${BOLD}"Building plugin\n"${RESET}
 
+ifneq ($(HAS_WEBAPP),)
 	# Build and copy files from webapp
 	cd webapp && npm run build
 	mkdir -p dist/$(PLUGINNAME)/webapp
 	cp -r webapp/dist/* dist/$(PLUGINNAME)/webapp/
+else ifneq ($(HAS_SERVER),)
+	mkdir -p dist/$(PLUGINNAME)/
+endif
 
+ifneq ($(HAS_SERVER),)
 	# Build files from server
 	cd server && go get github.com/mitchellh/gox
 	$(shell go env GOPATH)/bin/gox -osarch='darwin/amd64 linux/amd64 windows/amd64' -output 'dist/intermediate/plugin_{{.OS}}_{{.Arch}}' ./server
+endif
 
 	# Copy plugin files
-	cp plugin.json dist/$(PLUGINNAME)/
+	cp $(MANIFEST_FILE) dist/$(PLUGINNAME)/
 
+ifneq ($(HAS_SERVER),)
 	# Copy server executables & compress plugin
 	mkdir -p dist/$(PLUGINNAME)/server
 
@@ -139,14 +189,21 @@ dist: .distclean check-style plugin.json
 
 	mv dist/intermediate/plugin_windows_amd64.exe dist/$(PLUGINNAME)/server/plugin.exe
 	cd dist && tar -zcvf $(PACKAGENAME)-windows-amd64.tar.gz $(PLUGINNAME)/*
+else ifneq ($(HAS_WEBAPP),)
+	cd dist && tar -zcvf $(PACKAGENAME).tar.gz $(PLUGINNAME)/*
+endif
 
 	# Clean up temp files
 	rm -rf dist/$(PLUGINNAME)
 	rm -rf dist/intermediate
 
+ifneq ($(HAS_SERVER),)
 	@echo Linux plugin built at: dist/$(PACKAGENAME)-linux-amd64.tar.gz
 	@echo MacOS X plugin built at: dist/$(PACKAGENAME)-darwin-amd64.tar.gz
 	@echo Windows plugin built at: dist/$(PACKAGENAME)-windows-amd64.tar.gz
+else ifneq ($(HAS_WEBAPP),)
+	@echo Cross-platform plugin built at:  dist/$(PACKAGENAME)-amd64.tar.gz
+endif
 
 .distclean:
 	@echo ${BOLD}"Cleaning dist files\n"${RESET}

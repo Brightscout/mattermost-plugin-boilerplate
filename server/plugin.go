@@ -42,7 +42,7 @@ func (p *Plugin) OnActivate() error {
 }
 
 func (p *Plugin) setupStaticFileServer() error {
-	var exe, err = os.Executable()
+	exe, err := os.Executable()
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,6 @@ func (p *Plugin) setupStaticFileServer() error {
 
 func (p *Plugin) OnConfigurationChange() error {
 	if config.Mattermost != nil {
-
 		var configuration config.Configuration
 
 		if err := config.Mattermost.LoadPluginConfiguration(&configuration); err != nil {
@@ -120,15 +119,16 @@ func (p *Plugin) prepareContext(args *model.CommandArgs) command.Context {
 }
 
 func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
-	var conf = config.GetConfig()
+	conf := config.GetConfig()
+
 	if err := conf.IsValid(); err != nil {
 		p.API.LogError("This plugin is not configured: " + err.Error())
 		http.Error(w, "This plugin is not configured.", http.StatusNotImplemented)
 		return
 	}
 
-	var path = r.URL.Path
-	var endpoint = controller.Endpoints[path]
+	path := r.URL.Path
+	endpoint := controller.Endpoints[path]
 
 	if endpoint == nil {
 		p.handler.ServeHTTP(w, r)

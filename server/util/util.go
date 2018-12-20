@@ -56,7 +56,7 @@ func Min(a, b int) int {
 	return b
 }
 
-// CommandError can be used to return an empheral message as the response for a slash command
+// CommandError can be used to return an ephemeral message as the response for a slash command
 func CommandError(msg string) (*model.CommandResponse, *model.AppError) {
 	return &model.CommandResponse{
 		Type: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,

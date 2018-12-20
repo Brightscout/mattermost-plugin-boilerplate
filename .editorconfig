@@ -8,18 +8,25 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 charset = utf-8
 
-[*.{go,scss,js,jsx,json,html}]
+[*.go]
 indent_style = tab
 
-[webapp/package.json]
+[*.{js,jsx,json,html}]
 indent_style = space
+indent_size = 4
+
+[webapp/package.json]
 indent_size = 2
 
 [webapp/.eslintrc.json]
-indent_style = tab
+indent_size = 2
 
 [Makefile]
 indent_style = tab
+
+[*.scss]
+indent_style = space
+indent_size = 4
 
 [*.md]
 trim_trailing_whitespace = false

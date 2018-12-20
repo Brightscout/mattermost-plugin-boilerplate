@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	PluginName                = "boilerplate"
 	CommandPrefix             = PluginName
 	URLMappingKeyPrefix       = "url_"
 	ServerExeToWebappRootPath = "/../webapp"

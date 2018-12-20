@@ -1,77 +1,64 @@
 {
   "extends": [
-	"./node_modules/eslint-config-mattermost/.eslintrc.json",
-	"./node_modules/eslint-config-mattermost/.eslintrc-react.json"
+    "./node_modules/eslint-config-mattermost/.eslintrc.json",
+    "./node_modules/eslint-config-mattermost/.eslintrc-react.json"
   ],
   "globals": {
-	"window": true,
-	"document": true
+    "window": true,
+    "document": true
   },
   "plugins": [
-	"header",
-	"import",
-	"react"
+    "header",
+    "import",
+    "react"
   ],
   "env": {
-	"browser": true,
-	"node": true,
-	"jquery": true,
-	"es6": true
+    "browser": true,
+    "node": true,
+    "jquery": true,
+    "es6": true
   },
   "settings": {
-	"import/resolver": "webpack",
-	"react": {
-	  "pragma": "React",
-	  "version": "16.4.1"
-	}
+    "import/resolver": "webpack",
+    "react": {
+      "pragma": "React",
+      "version": "16.4.1"
+    }
   },
   "rules": {
-	"header/header": 0,
-	"import/no-unresolved": 2,
-	"import/order": [
-	  "error",
-	  {
-		"newlines-between": "always-and-inside-groups",
-		"groups": [
-		  "builtin",
-		  "external",
-		  [
-			"internal",
-			"parent"
-		  ],
-		  "sibling",
-		  "index"
-		]
-	  }
-	],
-	"no-magic-numbers": [
-	  1,
-	  {
-		"ignore": [
-		  -1,
-		  0,
-		  1,
-		  2
-		],
-		"enforceConst": true,
-		"detectObjects": true
-	  }
-	],
-	"react/jsx-filename-extension": [
-	  1,
-	  {
-		"extensions": [".js", ".jsx"]
-	  }
-	],
-	"react/prop-types": [
-	  2,
-	  {
-		"ignore": [
-		  "location",
-		  "history",
-		  "component"
-		]
-	  }
-	]
+    "header/header": 0,
+    "import/no-unresolved": 2,
+    "import/order": [
+      2,
+      {
+        "newlines-between": "always-and-inside-groups",
+        "groups": [
+
+          "builtin",
+          "external",
+          [
+            "internal",
+            "parent"
+          ],
+          "sibling",
+          "index"
+        ]
+      }
+    ],
+    "no-magic-numbers": [
+      1,
+      {
+        "ignore": [-1, 0, 1, 2],
+        "enforceConst": true,
+        "ignoreArrayIndexes": true
+      }
+    ],
+    "react/jsx-filename-extension": [
+      1,
+      {
+        "extensions": [".js", ".jsx"]
+      }
+    ],
+    "react/prop-types": 2
   }
 }

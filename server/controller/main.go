@@ -21,10 +21,10 @@ var Endpoints = map[string]*Endpoint{
 // Authenticated verifies if provided request is performed by a logged-in Mattermost user.
 func Authenticated(w http.ResponseWriter, r *http.Request) bool {
 	userID := r.Header.Get(config.HeaderMattermostUserID)
-
 	if userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return false
 	}
+
 	return true
 }
