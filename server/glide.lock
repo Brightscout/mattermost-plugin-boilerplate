@@ -1,5 +1,5 @@
-hash: 81fcbe42732487b9325093fa8ad818ccd71502cffd5b21ea26011243a24c332a
-updated: 2019-02-11T12:37:12.987426999+05:30
+hash: 03d2a3654e04314d460b147166068e80661604fbc19205e181e3d1b4eb4128a2
+updated: 2019-02-11T13:14:41.548831384+05:30
 imports:
 - name: github.com/blang/semver
   version: 3c1074078d32d767e08ab2c8564867292da86926
@@ -97,10 +97,6 @@ imports:
   subpackages:
   - bcrypt
   - blowfish
-- name: golang.org/x/lint
-  version: 06c8688daad7faa9da5a0c2f163a3d14aac986ca
-  subpackages:
-  - golint
 - name: golang.org/x/net
   version: aaf60122140d3fcf75376d319f0554393160eb50
   subpackages:
@@ -124,11 +120,6 @@ imports:
   - transform
   - unicode/bidi
   - unicode/norm
-- name: golang.org/x/tools
-  version: 6cd1fcedba52a3e8045a1c96970cec308e4a632c
-  subpackages:
-  - cmd/goimports
-  - cmd/vet
 - name: google.golang.org/genproto
   version: c66870c02cf823ceb633bcd05be3c7cda29976f4
   subpackages:
