@@ -14,18 +14,18 @@ HAS_SERVER=$(shell if [ "$(shell grep -E '[\^"]server["][ ]*[:]' $(MANIFEST_FILE
 
 TMPFILEGOLINT=golint.tmp
 
-BLACK=`tput -Txterm setaf 0`
-RED=`tput -Txterm setaf 1`
-GREEN=`tput -Txterm setaf 2`
-YELLOW=`tput -Txterm setaf 3`
-BLUE=`tput -Txterm setaf 4`
-MAGENTA=`tput -Txterm setaf 5`
-CYAN=`tput -Txterm setaf 6`
-WHITE=`tput -Txterm setaf 7`
+BLACK=`tput setaf 0`
+RED=`tput setaf 1`
+GREEN=`tput setaf 2`
+YELLOW=`tput setaf 3`
+BLUE=`tput setaf 4`
+MAGENTA=`tput setaf 5`
+CYAN=`tput setaf 6`
+WHITE=`tput setaf 7`
 
-BOLD=`tput -Txterm bold`
-INVERSE=`tput -Txterm rev`
-RESET=`tput -Txterm sgr0`
+BOLD=`tput bold`
+INVERSE=`tput rev`
+RESET=`tput sgr0`
 
 .PHONY: default setup-plugin build test clean check-style check-js check-go govet golint gofmt .distclean dist format fix-js fix-go trigger-release install-dependencies
 
@@ -59,6 +59,10 @@ check-go: server govet golint gofmt
 
 govet:
 ifneq ($(HAS_SERVER),)
+	@go tool vet 2>/dev/null ; if [ $$? -eq 3 ]; then \
+		echo "--> installing govet"; \
+		go get golang.org/x/tools/cmd/vet; \
+	fi
 	@echo ${BOLD}Running GOVET${RESET}
 	@cd server
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
@@ -68,6 +72,10 @@ endif
 
 golint:
 ifneq ($(HAS_SERVER),)
+	@command -v golint >/dev/null ; if [ $$? -ne 0 ]; then \
+		echo "--> installing golint"; \
+		go get -u golang.org/x/lint/golint; \
+	fi
 	@echo ${BOLD}Running GOLINT${RESET}
 	@cd server
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
@@ -93,6 +101,10 @@ endif
 
 fix-go:
 ifneq ($(HAS_SERVER),)
+	@command -v goimports >/dev/null ; if [ $$? -ne 0 ]; then \
+		echo "--> installing goimports"; \
+		go get golang.org/x/tools/cmd/goimports; \
+	fi
 	@echo ${BOLD}Formatting go giles${RESET}
 	@cd server
 	@find ./ -type f -name "*.go" -not -path "./server/vendor/*" -exec goimports -w {} \;
