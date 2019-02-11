@@ -16,7 +16,7 @@ jobs:
           name: Restore NPM dependencies cache
           key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
       - type: shell
-        name: 'Check for style guide compliance, run test cases and build artifacts'
+        name: 'Build artifacts'
         command: make dist
         environment:
             TERM: dumb
