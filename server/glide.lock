@@ -1,5 +1,5 @@
-hash: 655ccb87e0d8a7030cfc905828ff7c8d673ac5531bb348c8f16e6d9ead9a8737
-updated: 2018-12-17T18:19:12.182226461+05:30
+hash: 81fcbe42732487b9325093fa8ad818ccd71502cffd5b21ea26011243a24c332a
+updated: 2019-02-11T12:37:12.987426999+05:30
 imports:
 - name: github.com/blang/semver
   version: 3c1074078d32d767e08ab2c8564867292da86926
@@ -40,7 +40,7 @@ imports:
 - name: github.com/magiconair/properties
   version: c2353362d570a7bfa228149c62842019201cfb71
 - name: github.com/mattermost/mattermost-server
-  version: 0c1207215852a8726c3f09dea157d597fec368df
+  version: ad3ddac9b935fb842ca4301f69266ffb87ec8c86
   subpackages:
   - einterfaces
   - mlog

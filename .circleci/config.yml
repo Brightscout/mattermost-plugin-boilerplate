@@ -16,13 +16,10 @@ jobs:
           name: Restore NPM dependencies cache
           key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
       - type: shell
-        name: 'Build artifacts'
+        name: 'Check for style guide compliance, run test cases and build artifacts'
         command: make dist
         environment:
             TERM: dumb
-      - run:
-          name: Test
-          command: make test
       - save_cache:
           name: Save Golang dependencies cache
           key: dependency-cache-{{ checksum "./server/glide.lock" }}
