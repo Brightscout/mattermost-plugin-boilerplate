@@ -1,5 +1,5 @@
-hash: 655ccb87e0d8a7030cfc905828ff7c8d673ac5531bb348c8f16e6d9ead9a8737
-updated: 2018-12-17T18:19:12.182226461+05:30
+hash: 03d2a3654e04314d460b147166068e80661604fbc19205e181e3d1b4eb4128a2
+updated: 2019-02-11T13:14:41.548831384+05:30
 imports:
 - name: github.com/blang/semver
   version: 3c1074078d32d767e08ab2c8564867292da86926
@@ -40,7 +40,7 @@ imports:
 - name: github.com/magiconair/properties
   version: c2353362d570a7bfa228149c62842019201cfb71
 - name: github.com/mattermost/mattermost-server
-  version: 0c1207215852a8726c3f09dea157d597fec368df
+  version: ad3ddac9b935fb842ca4301f69266ffb87ec8c86
   subpackages:
   - einterfaces
   - mlog
@@ -97,10 +97,6 @@ imports:
   subpackages:
   - bcrypt
   - blowfish
-- name: golang.org/x/lint
-  version: 06c8688daad7faa9da5a0c2f163a3d14aac986ca
-  subpackages:
-  - golint
 - name: golang.org/x/net
   version: aaf60122140d3fcf75376d319f0554393160eb50
   subpackages:
@@ -124,11 +120,6 @@ imports:
   - transform
   - unicode/bidi
   - unicode/norm
-- name: golang.org/x/tools
-  version: 6cd1fcedba52a3e8045a1c96970cec308e4a632c
-  subpackages:
-  - cmd/goimports
-  - cmd/vet
 - name: google.golang.org/genproto
   version: c66870c02cf823ceb633bcd05be3c7cda29976f4
   subpackages:

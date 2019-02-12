@@ -1,9 +1,6 @@
 package: github.com/Brightscout/mattermost-plugin-boilerplate/server
 import:
 - package: github.com/mattermost/mattermost-server
-  version: ~5.6.0
+  version: ~5.7.1
   subpackages:
   - plugin
-- package: golang.org/x/tools/cmd/vet
-- package: golang.org/x/lint/golint
-- package: golang.org/x/tools/cmd/goimports

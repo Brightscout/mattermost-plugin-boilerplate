@@ -27,32 +27,26 @@ BOLD=`tput bold`
 INVERSE=`tput rev`
 RESET=`tput sgr0`
 
-.PHONY: default pre-run test clean check-style check-js check-go govet golint gofmt .distclean dist fix format fix-js fix-go github-release
+.PHONY: default setup-plugin build test clean check-style check-js check-go govet golint gofmt .distclean dist format fix-js fix-go trigger-release install-dependencies
 
-default: check-style test dist
+default: dist
 
-pre-run:
+setup-plugin:
 ifneq ($(HAS_WEBAPP),)
-	@echo "export const PLUGIN_NAME = '`echo $(PLUGINNAME)`';\
-	" > webapp/src/constants/manifest.js
+	@echo "export const PLUGIN_NAME = '`echo $(PLUGINNAME)`';" > webapp/src/constants/manifest.js
 endif
 ifneq ($(HAS_SERVER),)
-	@echo "package config\n\nconst (\n\
-		PluginName = \""`echo $(PLUGINNAME)`"\"\n)" > server/config/manifest.go
-
+	@echo "package config\n\nconst (\n\tPluginName = \""`echo $(PLUGINNAME)`"\"\n)" > server/config/manifest.go
 endif
 
-github-release:
+trigger-release:
 	@if [ $$(git status --porcelain | wc -l) != "0" -o $$(git rev-list HEAD@{upstream}..HEAD | wc -l) != "0" ]; \
 		then echo ${RED}"local repo is not clean"${RESET}; exit 1; fi;
 	@echo ${BOLD}"Creating a tag to trigger circleci build-and-release job\n"${RESET}
 	git tag $(PLUGINVERSION)
 	git push origin $(PLUGINVERSION)
 
-check-style: .npminstall vendor
-	@echo ${BOLD}"Checking for style guide compliance\n"${RESET}
-	@make check-js
-	@make check-go
+check-style: check-js check-go
 
 check-js:
 ifneq ($(HAS_WEBAPP),)
@@ -69,7 +63,7 @@ ifneq ($(HAS_SERVER),)
 		echo "--> installing govet"; \
 		go get golang.org/x/tools/cmd/vet; \
 	fi
-	@echo ${BOLD}Running GOVET${RESET}${RED}
+	@echo ${BOLD}Running GOVET${RESET}
 	@cd server
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
 	@$(GO) vet $(PKGS)
@@ -82,7 +76,7 @@ ifneq ($(HAS_SERVER),)
 		echo "--> installing golint"; \
 		go get -u golang.org/x/lint/golint; \
 	fi
-	@echo ${BOLD}Running GOLINT${RESET}${RED}
+	@echo ${BOLD}Running GOLINT${RESET}
 	@cd server
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
 	@touch $(TMPFILEGOLINT)
@@ -91,14 +85,12 @@ ifneq ($(HAS_SERVER),)
 	done
 	@grep -Ev "^$$" $(TMPFILEGOLINT) || true
 	@if [ "$$(grep -Ev "^$$" $(TMPFILEGOLINT) | wc -l)" -gt "0" ]; then \
-		rm -f $(TMPFILEGOLINT); echo "golint failure\n"${RESET}; exit 1; else \
+		rm -f $(TMPFILEGOLINT); echo ${RED}"golint failure\n"${RESET}; exit 1; else \
 		rm -f $(TMPFILEGOLINT); echo ${GREEN}"golint success\n"${RESET}; \
 	fi
 endif
 
-format: fix
-
-fix: fix-js fix-go
+format: fix-js fix-go
 
 fix-js:
 ifneq ($(HAS_WEBAPP),)
@@ -121,14 +113,14 @@ endif
 
 gofmt:
 ifneq ($(HAS_SERVER),)
-	@echo ${BOLD}Running GOFMT${RESET}${RED}
+	@echo ${BOLD}Running GOFMT${RESET}
 	@for package in $$(go list ./server/...); do \
 		files=$$(go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}} {{end}}' $$package); \
 		if [ "$$files" ]; then \
 			gofmt_output=$$(gofmt -d -s $$files 2>&1); \
 			if [ "$$gofmt_output" ]; then \
 				echo "$$gofmt_output"; \
-				echo "gofmt failure\n"; \
+				echo ${RED}"gofmt failure\n"${RESET}; \
 				exit 1; \
 			fi; \
 		fi; \
@@ -156,31 +148,32 @@ ifneq ($(HAS_SERVER),)
 	@echo "\n"
 endif
 
-dist: .distclean check-style $(MANIFEST_FILE)
+install-dependencies: .npminstall vendor
+
+dist: install-dependencies check-style test build
+
+build: .distclean $(MANIFEST_FILE)
 	@echo ${BOLD}"Building plugin\n"${RESET}
+	mkdir -p dist/$(PLUGINNAME)/
+	cp $(MANIFEST_FILE) dist/$(PLUGINNAME)/
 
 ifneq ($(HAS_WEBAPP),)
 	# Build and copy files from webapp
 	cd webapp && npm run build
 	mkdir -p dist/$(PLUGINNAME)/webapp
 	cp -r webapp/dist/* dist/$(PLUGINNAME)/webapp/
-else ifneq ($(HAS_SERVER),)
-	mkdir -p dist/$(PLUGINNAME)/
 endif
 
 ifneq ($(HAS_SERVER),)
-	# Build files from server
+	# Build files from server and copy server executables
 	cd server && go get github.com/mitchellh/gox
 	$(shell go env GOPATH)/bin/gox -osarch='darwin/amd64 linux/amd64 windows/amd64' -output 'dist/intermediate/plugin_{{.OS}}_{{.Arch}}' ./server
-endif
-
-	# Copy plugin files
-	cp $(MANIFEST_FILE) dist/$(PLUGINNAME)/
-
-ifneq ($(HAS_SERVER),)
-	# Copy server executables & compress plugin
 	mkdir -p dist/$(PLUGINNAME)/server
 
+endif
+
+	# Compress plugin
+ifneq ($(HAS_SERVER),)
 	mv dist/intermediate/plugin_darwin_amd64 dist/$(PLUGINNAME)/server/plugin.exe
 	cd dist && tar -zcvf $(PACKAGENAME)-darwin-amd64.tar.gz $(PLUGINNAME)/*
 

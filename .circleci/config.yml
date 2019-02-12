@@ -20,9 +20,6 @@ jobs:
         command: make dist
         environment:
             TERM: dumb
-      - run:
-          name: Test
-          command: make test
       - save_cache:
           name: Save Golang dependencies cache
           key: dependency-cache-{{ checksum "./server/glide.lock" }}
