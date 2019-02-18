@@ -27,7 +27,7 @@ BOLD=`tput bold`
 INVERSE=`tput rev`
 RESET=`tput sgr0`
 
-.PHONY: default setup-plugin build test clean check-style check-js check-go govet golint gofmt .distclean dist format fix-js fix-go trigger-release install-dependencies
+.PHONY: default .npminstall vendor setup-plugin build test clean check-style check-js check-go govet golint gofmt .distclean dist format fix-js fix-go trigger-release install-dependencies
 
 default: dist
 

@@ -42,7 +42,7 @@ func (c *Configuration) ProcessConfiguration() error {
 
 func (c *Configuration) IsValid() error {
 	// Add config validations here.
-	// Check fot required fields, formats, etc.
+	// Check for required fields, formats, etc.
 
 	if c.SiteURL == "" {
 		Mattermost.LogError("site URL cannot be empty")
