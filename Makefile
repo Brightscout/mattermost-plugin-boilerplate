@@ -5,8 +5,8 @@ GOPATH ?= $(GOPATH:)
 
 MANIFEST_FILE ?= plugin.json
 
-PLUGINNAME=$(shell echo `grep -Po '"'"id"'"\s*:\s*"\K([^"]*)' $(MANIFEST_FILE)`)
-PLUGINVERSION=v$(shell echo `grep -Po '"'"version"'"\s*:\s*"\K([^"]*)' $(MANIFEST_FILE)`)
+PLUGINNAME=$(shell echo `grep '"'"id"'"\s*:\s*"' $(MANIFEST_FILE) | head -1 | cut -d'"' -f4`)
+PLUGINVERSION=v$(shell echo `grep '"'"version"'"\s*:\s*"' $(MANIFEST_FILE) | head -1 | cut -d'"' -f4`)
 PACKAGENAME=mattermost-plugin-$(PLUGINNAME)-$(PLUGINVERSION)
 
 HAS_WEBAPP=$(shell if [ "$(shell grep -E '[\^"]webapp["][ ]*[:]' $(MANIFEST_FILE)  | wc -l)" -gt "0" ]; then echo "true"; fi)
@@ -27,7 +27,7 @@ BOLD=`tput bold`
 INVERSE=`tput rev`
 RESET=`tput sgr0`
 
-.PHONY: default setup-plugin build test clean check-style check-js check-go govet golint gofmt .distclean dist format fix-js fix-go trigger-release install-dependencies
+.PHONY: default .npminstall vendor setup-plugin build test clean check-style check-js check-go govet golint gofmt .distclean dist format fix-js fix-go trigger-release install-dependencies
 
 default: dist
 
@@ -55,7 +55,7 @@ ifneq ($(HAS_WEBAPP),)
 	@echo ${GREEN}"eslint success\n"${RESET}
 endif
 
-check-go: server govet golint gofmt
+check-go: govet golint gofmt
 
 govet:
 ifneq ($(HAS_SERVER),)
@@ -66,7 +66,7 @@ ifneq ($(HAS_SERVER),)
 	@echo ${BOLD}Running GOVET${RESET}
 	@cd server
 	$(eval PKGS := $(shell go list ./... | grep -v /vendor/))
-	@$(GO) vet $(PKGS)
+	@$(GO) vet -shadow $(PKGS)
 	@echo ${GREEN}"govet success\n"${RESET}
 endif
 
@@ -133,14 +133,14 @@ ifneq ($(HAS_SERVER),)
 	go test -v -coverprofile=coverage.txt ./...
 endif
 
-.npminstall: webapp/package-lock.json
+.npminstall:
 ifneq ($(HAS_WEBAPP),)
 	@echo ${BOLD}"Getting dependencies using npm\n"${RESET}
 	cd webapp && npm install
 	@echo "\n"
 endif
 
-vendor: server/glide.lock
+vendor:
 ifneq ($(HAS_SERVER),)
 	@echo ${BOLD}"Getting dependencies using glide\n"${RESET}
 	cd server && go get github.com/Masterminds/glide
