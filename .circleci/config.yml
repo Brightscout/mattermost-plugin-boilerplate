@@ -1,11 +1,8 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11-node
+      - image: circleci/golang:1.12-node
     working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
     steps:
       - checkout
@@ -39,14 +36,16 @@ jobs:
             - dist
   release:
     docker:
-      - image: circleci/golang:1.11-node
+      - image: cibuilds/github:0.12
     working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - run: go get -u github.com/tcnksm/ghr
-      - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
+  - run:
+      name: "Publish Release on GitHub"
+      command: |
+        ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ./dist/*.tar.gz
 
 workflows:
   version: 2
