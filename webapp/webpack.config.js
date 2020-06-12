@@ -1,3 +1,5 @@
+const exec = require('child_process').exec;
+
 const path = require('path');
 
 module.exports = {
@@ -19,16 +21,51 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: [
-                            'react',
-                            'env',
-                            'stage-0',
-                        ],
+                        cacheDirectory: true,
                         plugins: [
-                            'transform-runtime',
+                            '@babel/plugin-proposal-class-properties',
+                            '@babel/plugin-syntax-dynamic-import',
+                            '@babel/proposal-object-rest-spread',
+                        ],
+                        presets: [ // Babel configuration is in .babelrc because jest requires it to be there.
+                            ['@babel/preset-env', {
+                                targets: {
+                                    chrome: 66,
+                                    firefox: 60,
+                                    edge: 42,
+                                    safari: 12,
+                                },
+                                modules: false,
+                                debug: false,
+                                corejs: '3.6.4',
+                                useBuiltIns: 'usage',
+                                shippedProposals: true,
+                            }],
+                            ['@babel/preset-react', {
+                                useBuiltIns: true,
+                            }],
                         ],
                     },
                 },
+            },
+            {
+                test: /.(bmp|gif|jpe?g|png|svg)$/,
+                exclude: /node_modules/,
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192,
+                        },
+                    },
+                ],
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    'style-loader',
+                    'css-loader',
+                ],
             },
         ],
     },
@@ -45,4 +82,25 @@ module.exports = {
         publicPath: '/',
         filename: 'main.js',
     },
+    devtool: 'source-map',
+    performance: {
+        hints: 'warning',
+    },
+    target: 'web',
+    plugins: [
+        {
+            apply: (compiler) => {
+                compiler.hooks.afterEmit.tap('AfterEmitPlugin', () => {
+                    exec('cd .. && make reset', (err, stdout, stderr) => {
+                        if (stdout) {
+                            process.stdout.write(stdout);
+                        }
+                        if (stderr) {
+                            process.stderr.write(stderr);
+                        }
+                    });
+                });
+            },
+        },
+    ],
 };

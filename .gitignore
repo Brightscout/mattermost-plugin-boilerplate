@@ -70,6 +70,9 @@ dist
 plugin.exe
 .npminstall
 *.tar.gz
-server/vendor/
+vendor/
 .history/
 coverage.txt
+
+# IDE generated files
+.idea

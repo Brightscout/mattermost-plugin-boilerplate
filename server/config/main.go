@@ -2,28 +2,29 @@ package config
 
 import (
 	"github.com/mattermost/mattermost-server/plugin"
-	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 )
 
 const (
-	CommandPrefix             = PluginName
-	URLMappingKeyPrefix       = "url_"
-	ServerExeToWebappRootPath = "/../webapp"
+	CommandPrefix = PluginName
 
 	URLPluginBase = "/plugins/" + PluginName
 	URLStaticBase = URLPluginBase + "/static"
 
 	HeaderMattermostUserID = "Mattermost-User-Id"
+
+	BotUserName    = ""
+	BotDisplayName = ""
+	BotDescription = ""
 )
 
 var (
 	config     atomic.Value
 	Mattermost plugin.API
+	BotUserID  string
 )
 
 type Configuration struct {
-	SiteURL string `json:"SiteURL"`
 }
 
 func GetConfig() *Configuration {
@@ -34,20 +35,12 @@ func SetConfig(c *Configuration) {
 	config.Store(c)
 }
 
+// ProcessConfiguration is used for post-processing on the configuration.
 func (c *Configuration) ProcessConfiguration() error {
-	// any post-processing on configurations goes here
-
 	return nil
 }
 
+// IsValid is used for config validations.
 func (c *Configuration) IsValid() error {
-	// Add config validations here.
-	// Check for required fields, formats, etc.
-
-	if c.SiteURL == "" {
-		Mattermost.LogError("site URL cannot be empty")
-		return errors.New("site URL cannot be empty")
-	}
-
 	return nil
 }
