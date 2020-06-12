@@ -2,31 +2,21 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12-node
-    working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
+      - image: circleci/golang:1.14-node
+    working_directory: ~/mattermost-plugin-boilerplate
     steps:
       - checkout
       - restore_cache:
-          name: Restore Golang dependencies cache
-          key: dependency-cache-{{ checksum "./server/glide.lock" }}
-      - restore_cache:
-          name: Restore NPM dependencies cache
-          key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
+          key: go-mod-v1-{{ checksum "go.sum" }}
       - type: shell
-        name: 'Build artifacts'
-        command: make dist
+        name: 'Checks the code style, tests, builds and bundles the plugin.'
+        command: make all
         environment:
-            TERM: dumb
+          TERM: dumb
       - save_cache:
-          name: Save Golang dependencies cache
-          key: dependency-cache-{{ checksum "./server/glide.lock" }}
+          key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
-              - ./server/vendor
-      - save_cache:
-          name: Save NPM dependencies cache
-          key: dependency-cache-{{ checksum "./webapp/package-lock.json" }}
-          paths:
-              - ./webapp/node_modules
+            - "/go/pkg/mod"
       - store_artifacts:
           path: ./dist
           destination: build
@@ -37,7 +27,7 @@ jobs:
   release:
     docker:
       - image: cibuilds/github:0.12
-    working_directory: /go/src/github.com/Brightscout/mattermost-plugin-boilerplate
+    working_directory: ~/mattermost-plugin-boilerplate
     steps:
       - checkout
       - attach_workspace:
@@ -46,7 +36,6 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} dist/
-
 workflows:
   version: 2
   build:

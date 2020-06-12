@@ -1,39 +1,44 @@
 {
+  "env": {
+    "browser": true,
+    "es6": true
+  },
   "extends": [
-    "./node_modules/eslint-config-mattermost/.eslintrc.json",
-    "./node_modules/eslint-config-mattermost/.eslintrc-react.json"
+    "./node_modules/eslint-plugin-mattermost/.eslintrc.json",
+    "./node_modules/eslint-plugin-mattermost/.eslintrc-react.json"
   ],
   "globals": {
-    "window": true,
-    "document": true
+    "Atomics": "readonly",
+    "document": true,
+    "SharedArrayBuffer": "readonly",
+    "window": true
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2018,
+    "sourceType": "module"
   },
   "plugins": [
     "header",
     "import",
     "react"
   ],
-  "env": {
-    "browser": true,
-    "node": true,
-    "jquery": true,
-    "es6": true
-  },
   "settings": {
     "import/resolver": "webpack",
     "react": {
       "pragma": "React",
-      "version": "16.4.1"
+      "version": "16.8.6"
     }
   },
   "rules": {
     "header/header": 0,
-    "import/no-unresolved": 2,
     "import/order": [
       2,
       {
         "newlines-between": "always-and-inside-groups",
         "groups": [
-
           "builtin",
           "external",
           [
@@ -45,20 +50,49 @@
         ]
       }
     ],
+    "indent": [
+      "error",
+      4
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
     "no-magic-numbers": [
       1,
       {
-        "ignore": [-1, 0, 1, 2],
+        "ignore": [
+          -1,
+          0,
+          1,
+          2
+        ],
         "enforceConst": true,
         "ignoreArrayIndexes": true
       }
     ],
-    "react/jsx-filename-extension": [
-      1,
+    "object-property-newline": [
+      2,
       {
-        "extensions": [".js", ".jsx"]
+        "allowAllPropertiesOnSameLine": false
       }
     ],
-    "react/prop-types": 2
+    "object-curly-newline": [
+      2,
+      {
+        "ObjectExpression": { "minProperties": 4, "multiline": true, "consistent": true },
+        "ObjectPattern": { "minProperties": 4, "multiline": true, "consistent": true },
+        "ImportDeclaration": { "minProperties": 4, "multiline": true, "consistent": true },
+        "ExportDeclaration": { "minProperties": 4, "multiline": true, "consistent": true }
+      }
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ]
   }
 }

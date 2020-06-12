@@ -1,23 +1,21 @@
 {
-  "id": "boilerplate",
-  "version": "1.0.0",
-  "name": "Boilerplate plugin",
-  "description": "",
-  "webapp": {
-    "bundle_path": "webapp/main.js"
-  },
-  "server": {
-    "executable": "server/plugin.exe"
-  },
-  "settings_schema": {
-	"settings": [
-	  {
-		"key": "SiteURL",
-		"display_name": "Site URL",
-		"type": "text",
-		"help_text": "The URL where Mattermost is being served, complete with protocol and any special ports being used.",
-		"placeholder": "https://mm.example.com:8065"
-	  }
-	]
-  }
+    "id": "boilerplate",
+    "version": "1.0.0",
+    "name": "Boilerplate plugin",
+    "description": "",
+    "min_server_version": "5.12.0",
+    "server": {
+        "executables": {
+            "linux-amd64": "server/dist/plugin-linux-amd64",
+            "darwin-amd64": "server/dist/plugin-darwin-amd64",
+            "windows-amd64": "server/dist/plugin-windows-amd64.exe"
+        }
+    },
+    "webapp": {
+        "bundle_path": "webapp/dist/main.js"
+    },
+    "settings_schema": {
+        "settings": [
+        ]
+    }
 }

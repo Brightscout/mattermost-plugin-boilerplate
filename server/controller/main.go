@@ -1,21 +1,69 @@
 package controller
 
 import (
+	"crypto/subtle"
 	"net/http"
+	"net/url"
+	"path/filepath"
 
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/util"
+	"github.com/gorilla/mux"
+	"github.com/mattermost/mattermost-server/model"
+	"github.com/pkg/errors"
 )
 
 type Endpoint struct {
 	Path         string
+	Method       string
 	Execute      func(w http.ResponseWriter, r *http.Request)
 	RequiresAuth bool
 }
 
-var Endpoints = map[string]*Endpoint{
-	// add endpoints here.
-	// Map endpoint URL to Endpoint object. Example -
-	// GetMetadata.Path: GetMetadata
+// Endpoints is a map of endpoint key to endpoint object
+// Usage: getEndpointKey(GetMetadata): GetMetadata
+var Endpoints = map[string]*Endpoint{}
+
+// Uniquely identifies an endpoint using path and method
+func getEndpointKey(endpoint *Endpoint) string {
+	return util.GetKeyHash(endpoint.Path + "-" + endpoint.Method)
+}
+
+// InitAPI initializes the REST API
+func InitAPI() *mux.Router {
+	r := mux.NewRouter()
+	handleStaticFiles(r)
+
+	s := r.PathPrefix("/api/v1").Subrouter()
+	for _, endpoint := range Endpoints {
+		handler := endpoint.Execute
+		if endpoint.RequiresAuth {
+			handler = handleAuthRequired(endpoint)
+		}
+		s.HandleFunc(endpoint.Path, handler).Methods(endpoint.Method)
+	}
+
+	return r
+}
+
+// handleStaticFiles handles the static files under the assets directory.
+func handleStaticFiles(r *mux.Router) {
+	bundlePath, err := config.Mattermost.GetBundlePath()
+	if err != nil {
+		config.Mattermost.LogWarn("Failed to get bundle path.", "Error", err.Error())
+		return
+	}
+
+	// This will serve static files from the 'assets' directory under '/static/<filename>'
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(bundlePath, "assets")))))
+}
+
+func handleAuthRequired(endpoint *Endpoint) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if Authenticated(w, r) {
+			endpoint.Execute(w, r)
+		}
+	}
 }
 
 // Authenticated verifies if provided request is performed by a logged-in Mattermost user.
@@ -27,4 +75,27 @@ func Authenticated(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	return true
+}
+
+func returnStatusOK(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	m := make(map[string]string)
+	m[model.STATUS] = model.STATUS_OK
+	_, _ = w.Write([]byte(model.MapToJson(m)))
+}
+
+func verifyHTTPSecret(expected, got string) (status int, err error) {
+	for {
+		if subtle.ConstantTimeCompare([]byte(got), []byte(expected)) == 1 {
+			break
+		}
+
+		unescaped, _ := url.QueryUnescape(got)
+		if unescaped == got {
+			return http.StatusForbidden, errors.New("Request URL: secret did not match")
+		}
+		got = unescaped
+	}
+
+	return 0, nil
 }

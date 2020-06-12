@@ -1,33 +1,29 @@
 package command
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/mattermost/mattermost-server/model"
 )
 
-type Context struct {
-	CommandArgs *model.CommandArgs
-	Props       map[string]interface{}
+type HandlerFunc func(context *model.CommandArgs, args ...string) (*model.CommandResponse, *model.AppError)
+
+type Handler struct {
+	Command        *model.Command
+	handlers       map[string]HandlerFunc
+	defaultHandler HandlerFunc
 }
 
-type Config struct {
-	Command  *model.Command
-	HelpText string
-	Execute  func([]string, Context) (*model.CommandResponse, *model.AppError)
-	Validate func([]string, Context) (*model.CommandResponse, *model.AppError)
-}
-
-func (c *Config) Syntax() string {
-	return fmt.Sprintf("/%s %s", c.Command.Trigger, c.Command.AutoCompleteHint)
-}
-
-var Commands map[string]*Config
-
-func init() {
-	Commands = map[string]*Config{
-		// Add command mappings here.
-		// Map trigger to corresponding Config object. Example -
-		// SomeCommand().Trigger: SomeCommand()s
+func (ch Handler) Handle(context *model.CommandArgs, args ...string) (*model.CommandResponse, *model.AppError) {
+	for n := len(args); n > 0; n-- {
+		h := ch.handlers[strings.Join(args[:n], "/")]
+		if h != nil {
+			return h(context, args[n:]...)
+		}
 	}
+	return ch.defaultHandler(context, args...)
+}
+
+var Handlers = map[string]Handler{
+	CommandHandler.Command.Trigger: CommandHandler,
 }

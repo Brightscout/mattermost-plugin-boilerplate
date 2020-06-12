@@ -2,12 +2,11 @@ package main
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
+	"github.com/pkg/errors"
 
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/command"
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
@@ -17,16 +16,13 @@ import (
 
 type Plugin struct {
 	plugin.MattermostPlugin
-
-	handler http.Handler
 }
 
 func (p *Plugin) OnActivate() error {
 	config.Mattermost = p.API
 
-	if err := p.setupStaticFileServer(); err != nil {
-		p.API.LogError(err.Error())
-		return err
+	if err := p.initBotUser(); err != nil {
+		config.Mattermost.LogError("Failed to create a bot user", "Error", err.Error())
 	}
 
 	if err := p.OnConfigurationChange(); err != nil {
@@ -41,43 +37,50 @@ func (p *Plugin) OnActivate() error {
 	return nil
 }
 
-func (p *Plugin) setupStaticFileServer() error {
-	exe, err := os.Executable()
+func (p *Plugin) initBotUser() error {
+	botUserID, err := p.Helpers.EnsureBot(&model.Bot{
+		Username:    config.BotUserName,
+		DisplayName: config.BotDisplayName,
+		Description: config.BotDescription,
+	})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to ensure bot")
 	}
-	p.handler = http.FileServer(http.Dir(filepath.Dir(exe) + config.ServerExeToWebappRootPath))
+
+	config.BotUserID = botUserID
 	return nil
 }
 
 func (p *Plugin) OnConfigurationChange() error {
-	if config.Mattermost != nil {
-		var configuration config.Configuration
-
-		if err := config.Mattermost.LoadPluginConfiguration(&configuration); err != nil {
-			config.Mattermost.LogError("Error in LoadPluginConfiguration: " + err.Error())
-			return err
-		}
-
-		if err := configuration.ProcessConfiguration(); err != nil {
-			config.Mattermost.LogError("Error in ProcessConfiguration: " + err.Error())
-			return err
-		}
-
-		if err := configuration.IsValid(); err != nil {
-			config.Mattermost.LogError("Error in Validating Configuration: " + err.Error())
-			return err
-		}
-
-		config.SetConfig(&configuration)
+	// If OnActivate has not been run yet.
+	if config.Mattermost == nil {
+		return nil
 	}
+	var configuration config.Configuration
+
+	if err := config.Mattermost.LoadPluginConfiguration(&configuration); err != nil {
+		config.Mattermost.LogError("Error in LoadPluginConfiguration.", "Error", err.Error())
+		return err
+	}
+
+	if err := configuration.ProcessConfiguration(); err != nil {
+		config.Mattermost.LogError("Error in ProcessConfiguration.", "Error", err.Error())
+		return err
+	}
+
+	if err := configuration.IsValid(); err != nil {
+		config.Mattermost.LogError("Error in Validating Configuration.", "Error", err.Error())
+		return err
+	}
+
+	config.SetConfig(&configuration)
 	return nil
 }
 
 func (p *Plugin) registerCommands() error {
-	for _, c := range command.Commands {
-		if err := config.Mattermost.RegisterCommand(c.Command); err != nil {
-			return err
+	for trigger, handler := range command.Handlers {
+		if err := config.Mattermost.RegisterCommand(handler.Command); err != nil {
+			return errors.Wrap(err, "failed to register slash command: "+trigger)
 		}
 	}
 
@@ -87,54 +90,36 @@ func (p *Plugin) registerCommands() error {
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	split, argErr := util.SplitArgs(args.Command)
 	if argErr != nil {
-		return util.CommandError(argErr.Error())
+		return util.SendEphemeralCommandResponse(argErr.Error())
 	}
 
-	cmdName := split[0]
+	cmdName := split[0][1:]
 	var params []string
 
 	if len(split) > 1 {
 		params = split[1:]
 	}
 
-	commandConfig := command.Commands[cmdName]
-	if commandConfig == nil {
-		return nil, &model.AppError{Message: "Unknown command: [" + cmdName + "] encountered"}
+	handler, ok := command.Handlers[cmdName]
+	if !ok {
+		return util.SendEphemeralCommandResponse("Unknown command: [" + cmdName + "] encountered")
 	}
 
-	context := p.prepareContext(args)
-	if response, err := commandConfig.Validate(params, context); response != nil {
-		return response, err
-	}
-
-	config.Mattermost.LogInfo("Executing command: " + cmdName + " with params: [" + strings.Join(params, ", ") + "]")
-	return commandConfig.Execute(params, context)
-}
-
-func (p *Plugin) prepareContext(args *model.CommandArgs) command.Context {
-	return command.Context{
-		CommandArgs: args,
-		Props:       make(map[string]interface{}),
-	}
+	config.Mattermost.LogDebug("Executing command: " + cmdName + " with params: [" + strings.Join(params, ", ") + "]")
+	return handler.Handle(args, params...)
 }
 
 func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
-	conf := config.GetConfig()
+	p.API.LogDebug("New request:", "Host", r.Host, "RequestURI", r.RequestURI, "Method", r.Method)
 
+	conf := config.GetConfig()
 	if err := conf.IsValid(); err != nil {
-		p.API.LogError("This plugin is not configured: " + err.Error())
+		p.API.LogError("This plugin is not configured.", "Error", err.Error())
 		http.Error(w, "This plugin is not configured.", http.StatusNotImplemented)
 		return
 	}
 
-	path := r.URL.Path
-	endpoint := controller.Endpoints[path]
-
-	if endpoint == nil {
-		p.handler.ServeHTTP(w, r)
-	} else if !endpoint.RequiresAuth || controller.Authenticated(w, r) {
-		endpoint.Execute(w, r)
-	}
+	controller.InitAPI().ServeHTTP(w, r)
 }
 
 func main() {
