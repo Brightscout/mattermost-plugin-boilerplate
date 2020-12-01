@@ -7,11 +7,27 @@ import (
 	"path/filepath"
 
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/service"
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/util"
 	"github.com/gorilla/mux"
-	"github.com/mattermost/mattermost-server/model"
+	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost-server/v5/plugin"
 	"github.com/pkg/errors"
 )
+
+type Controller struct {
+	api     plugin.API
+	helpers plugin.Helpers
+	service service.Service
+}
+
+func NewController(api plugin.API, helpers plugin.Helpers, service service.Service) *Controller {
+	return &Controller{
+		api:     api,
+		helpers: helpers,
+		service: service,
+	}
+}
 
 type Endpoint struct {
 	Path         string
@@ -30,7 +46,7 @@ func getEndpointKey(endpoint *Endpoint) string {
 }
 
 // InitAPI initializes the REST API
-func InitAPI() *mux.Router {
+func (c *Controller) InitAPI() *mux.Router {
 	r := mux.NewRouter()
 	handleStaticFiles(r)
 
