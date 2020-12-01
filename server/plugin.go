@@ -4,18 +4,25 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/model"
-	"github.com/mattermost/mattermost-server/plugin"
+	"github.com/gorilla/mux"
+	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost-server/v5/plugin"
 	"github.com/pkg/errors"
 
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/command"
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/config"
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/controller"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/service"
+	"github.com/Brightscout/mattermost-plugin-boilerplate/server/store"
 	"github.com/Brightscout/mattermost-plugin-boilerplate/server/util"
 )
 
 type Plugin struct {
 	plugin.MattermostPlugin
+	router *mux.Router
+
+	Store   *store.Store
+	Service *service.Service
 }
 
 func (p *Plugin) OnActivate() error {
@@ -33,6 +40,10 @@ func (p *Plugin) OnActivate() error {
 		config.Mattermost.LogError(err.Error())
 		return err
 	}
+	p.Store = store.NewStore(p.API)
+
+	p.Service = service.NewService(p.API, p.Helpers, p.Store)
+	p.router = controller.NewController(p.API, p.Helpers, *p.Service).InitAPI()
 
 	return nil
 }
@@ -105,7 +116,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return util.SendEphemeralCommandResponse("Unknown command: [" + cmdName + "] encountered")
 	}
 
-	config.Mattermost.LogDebug("Executing command: " + cmdName + " with params: [" + strings.Join(params, ", ") + "]")
+	p.API.LogDebug("Executing command: " + cmdName + " with params: [" + strings.Join(params, ", ") + "]")
 	return handler.Handle(args, params...)
 }
 
@@ -119,7 +130,7 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	controller.InitAPI().ServeHTTP(w, r)
+	p.router.ServeHTTP(w, r)
 }
 
 func main() {
